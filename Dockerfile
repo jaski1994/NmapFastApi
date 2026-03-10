@@ -1,8 +1,8 @@
-FROM debian:bookworm-slim
+# Build Stage
+FROM debian:bookworm-slim AS builder
 
-# Install system dependencies
+# Install build dependencies
 RUN apt-get update && apt-get install -y \
-    nmap \
     python3-venv \
     python3-pip \
     build-essential \
@@ -13,17 +13,28 @@ RUN apt-get update && apt-get install -y \
     libxslt1-dev \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /src
-
-# Copy requirements first to leverage Docker cache
-COPY requirements.txt .
-
 # Create and activate a virtual environment
 RUN python3 -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Python dependencies inside venv
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Run Stage
+FROM debian:bookworm-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    nmap \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy virtual environment from builder stage
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+WORKDIR /src
 
 # Copy application files
 COPY . .
