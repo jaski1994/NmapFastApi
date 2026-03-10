@@ -2,7 +2,7 @@ import asyncio
 import nmap
 from datetime import datetime, timezone
 from app.models import ScanType, ScanStatus
-from app.store import update_scan
+from app.schemas.store import update_scan
 
 
 def perform_nmap_scan(scan_id: str, target: str, scan_type: ScanType):
