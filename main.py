@@ -1,6 +1,11 @@
 from fastapi import FastAPI
 from app.api.main import api_router
 from app.core.config import settings
+from app.core.database import Base, engine
+from app.models.scan import DBScan # Import models to ensure they are registered
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
