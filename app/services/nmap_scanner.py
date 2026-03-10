@@ -26,19 +26,31 @@ def perform_nmap_scan(scan_id: str, target: str, scan_type: ScanType):
         host = list(result["scan"].keys())[0]
         host_data = result["scan"][host]
 
+        open_ports_count = 0
         ports = []
-        for proto in host_data.get("tcp", {}):
-            port = host_data["tcp"][proto]
-            ports.append({
-                "port_id": proto,
-                "state": port["state"],
-                "service": port.get("name")
-            })
+        for proto in host_data.all_protocols():
+            for port, port_data in host_data[proto].items():
+                if port_data["state"] == "open":
+                    open_ports_count += 1
+                    ports.append({
+                        "port": port,
+                        "protocol": proto,
+                        "state": port_data["state"],
+                        "service": port_data.get("name")
+                    })
+
+        duration_seconds = (end - start).total_seconds()
+        command = nm.command_line()
 
         update_scan(scan_id, {
             "status": ScanStatus.completed.value,
+            "summary": {
+                "open_ports_count": open_ports_count,
+                "duration_seconds": duration_seconds
+            },
             "results": {
                 "host": host,
+                "command": command,
                 "ports": ports,
                 "start_time": start.isoformat(),
                 "end_time": end.isoformat()

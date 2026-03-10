@@ -1,16 +1,16 @@
-# NmapFastApi 🚀
+# NmapFastApi 
 
 Un'API REST asincrona e veloce per eseguire scansioni Nmap. Sviluppata con **FastAPI**, **SQLAlchemy** (SQLite) e **python-nmap**. 
 Gestisce le scansioni in background utilizzando `BackgroundTasks` e salva la cronologia e i risultati in un database locale.
 
-## Funzionalità ✨
+## Funzionalità 
 - **Scansioni Asincrone:** Avvia scansioni Nmap che vengono eseguite in background senza bloccare l'API.
 - **Endpoint RESTful:** Crea scansioni, controlla il loro stato e recupera i risultati dettagliati (porte, stati, servizi) in formato JSON.
 - **Dockerizzato:** Pronto all'uso per essere deployato con Docker e Docker Compose.
 - **Diversi Tipi di Scansione:** Supporto nativo per scansioni rapide (Quick), complete (Full) e rilevamento dei servizi (Service Detection).
 - **CI/CD:** Pipeline GitHub Actions preconfigurata per buildare e caricare l'immagine Docker sul GitHub Container Registry (GHCR).
 
-## Stack Tecnologico 🛠️
+## Stack Tecnologico 
 - **Framework:** FastAPI, Uvicorn
 - **Database:** SQLAlchemy, SQLite
 - **Libreria di Rete:** Nmap, python-nmap
@@ -18,7 +18,7 @@ Gestisce le scansioni in background utilizzando `BackgroundTasks` e salva la cro
 
 ---
 
-## Avvio Rapido (Docker) 🐳
+## Avvio Rapido (Docker) 
 
 Il modo più semplice e consigliato per avviare l'API è utilizzare Docker Compose, in quanto installerà automaticamente le dipendenze di sistema richieste da `nmap`.
 
@@ -40,7 +40,7 @@ Il modo più semplice e consigliato per avviare l'API è utilizzare Docker Compo
 
 ---
 
-## Endpoint dell'API 📡
+## Endpoint dell'API 
 
 L'API è esposta sotto il prefisso `/api/v1/scan/`.
 
@@ -92,7 +92,7 @@ curl -X 'GET' \
 
 ---
 
-## CI/CD Pipeline ⚙️
+## CI/CD Pipeline 
 
 Il progetto include un workflow **GitHub Actions** (`.github/workflows/ci.yml`).
 Ogni volta che fai un push (o pull request) sul branch `main`:
