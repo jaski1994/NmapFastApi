@@ -1,7 +1,9 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Path
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Path, Depends
 import uuid
 from datetime import datetime, timezone
+from sqlalchemy.orm import Session
 
+from app.core.database import get_db
 from app.models.scan import ScanType, ScanStatus
 from app.schemas.scan import ScanRequest, ScanResponse, ScanListResponse, ScanResult, ScanSummary
 from app.schemas.store import get_scan, create_scan, list_scans
@@ -13,7 +15,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 @router.post("/", response_model=ScanResponse, status_code=202)
-async def create_new_scan(request: ScanRequest, background_tasks: BackgroundTasks):
+async def create_new_scan(request: ScanRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     scan_id = str(uuid.uuid4())
     start_time = datetime.now(timezone.utc)
     
@@ -27,17 +29,17 @@ async def create_new_scan(request: ScanRequest, background_tasks: BackgroundTask
         "summary": None,
         "results": None
     }
-    create_scan(scan_id, scan_data)
+    create_scan(db, scan_id, scan_data)
     
     # Trigger background task
     logger.info("Scan requested", extra={"scan_id": scan_id, "target": request.target, "scan_type": request.scan_type.value})
     background_tasks.add_task(run_nmap_scan, scan_id, request.target, request.scan_type)
     
-    return get_scan(scan_id)
+    return get_scan(db, scan_id)
 
 @router.get("/{scan_id}", response_model=ScanResponse)
-async def get_scan_status(scan_id: str = Path(..., title="The ID of the scan")):
-    scan = get_scan(scan_id)
+async def get_scan_status(scan_id: str = Path(..., title="The ID of the scan"), db: Session = Depends(get_db)):
+    scan = get_scan(db, scan_id)
     if not scan:
         logger.warning("Scan status requested but not found", extra={"scan_id": scan_id})
         raise HTTPException(status_code=404, detail="Scan not found")
@@ -45,8 +47,8 @@ async def get_scan_status(scan_id: str = Path(..., title="The ID of the scan")):
     return scan
 
 @router.get("/{scan_id}/results")
-async def get_scan_results(scan_id: str = Path(..., title="The ID of the scan")):
-    scan = get_scan(scan_id)
+async def get_scan_results(scan_id: str = Path(..., title="The ID of the scan"), db: Session = Depends(get_db)):
+    scan = get_scan(db, scan_id)
     if not scan:
         logger.warning("Scan results requested but not found", extra={"scan_id": scan_id})
         raise HTTPException(status_code=404, detail="Scan not found")
@@ -58,8 +60,8 @@ async def get_scan_results(scan_id: str = Path(..., title="The ID of the scan"))
     return scan.results
 
 @router.get("/", response_model=list[ScanListResponse])
-async def get_all_scans():
-    scans = list_scans()
+async def get_all_scans(db: Session = Depends(get_db)):
+    scans = list_scans(db)
     # Sort scans by start_time descending (newest first)
     scans.sort(key=lambda x: x.start_time if x.start_time else datetime.min.replace(tzinfo=timezone.utc), reverse=True)
     return scans
