@@ -6,6 +6,9 @@ from app.models.scan import ScanType, ScanStatus
 from app.schemas.scan import ScanRequest, ScanResponse, ScanListResponse, ScanResult, ScanSummary
 from app.schemas.store import get_scan, create_scan, list_scans
 from app.services.nmap_scanner import run_nmap_scan
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -27,6 +30,7 @@ async def create_new_scan(request: ScanRequest, background_tasks: BackgroundTask
     create_scan(scan_id, scan_data)
     
     # Trigger background task
+    logger.info("Scan requested", extra={"scan_id": scan_id, "target": request.target, "scan_type": request.scan_type.value})
     background_tasks.add_task(run_nmap_scan, scan_id, request.target, request.scan_type)
     
     return get_scan(scan_id)
@@ -35,6 +39,7 @@ async def create_new_scan(request: ScanRequest, background_tasks: BackgroundTask
 async def get_scan_status(scan_id: str = Path(..., title="The ID of the scan")):
     scan = get_scan(scan_id)
     if not scan:
+        logger.warning("Scan status requested but not found", extra={"scan_id": scan_id})
         raise HTTPException(status_code=404, detail="Scan not found")
     
     return scan
@@ -43,9 +48,11 @@ async def get_scan_status(scan_id: str = Path(..., title="The ID of the scan")):
 async def get_scan_results(scan_id: str = Path(..., title="The ID of the scan")):
     scan = get_scan(scan_id)
     if not scan:
+        logger.warning("Scan results requested but not found", extra={"scan_id": scan_id})
         raise HTTPException(status_code=404, detail="Scan not found")
         
     if scan.status != ScanStatus.completed.value:
+        logger.info("Scan results requested but not yet completed", extra={"scan_id": scan_id, "current_status": scan.status})
         raise HTTPException(status_code=400, detail=f"Scan results not available. Current status: {scan.status}")
         
     return scan.results

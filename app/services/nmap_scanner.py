@@ -3,7 +3,9 @@ import nmap
 from datetime import datetime, timezone
 from app.models import ScanType, ScanStatus
 from app.schemas.store import update_scan
+import logging
 
+logger = logging.getLogger(__name__)
 
 def perform_nmap_scan(scan_id: str, target: str, scan_type: ScanType):
     try:
@@ -17,6 +19,7 @@ def perform_nmap_scan(scan_id: str, target: str, scan_type: ScanType):
 
         args = args_map.get(scan_type, "")
 
+        logger.info("Starting nmap process", extra={"scan_id": scan_id, "target": target, "arguments": args})
         start = datetime.now(timezone.utc)
 
         result = nm.scan(hosts=target, arguments=args)
@@ -56,9 +59,14 @@ def perform_nmap_scan(scan_id: str, target: str, scan_type: ScanType):
                 "end_time": end.isoformat()
             }
         })
+        logger.info("Nmap scan completed successfully", extra={
+            "scan_id": scan_id, 
+            "duration": duration_seconds, 
+            "open_ports": open_ports_count
+        })
 
     except Exception as e:
-        print(e)
+        logger.error("Nmap scan failed", extra={"scan_id": scan_id}, exc_info=True)
         update_scan(scan_id, {"status": ScanStatus.failed.value})
 
 

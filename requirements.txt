@@ -5,3 +5,4 @@ sqlalchemy
 python-nmap
 pytest
 httpx
+python-json-logger
