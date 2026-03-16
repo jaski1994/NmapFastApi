@@ -10,6 +10,7 @@ on:
       - "requirements.txt"
       - "Dockerfile"
       - ".github/workflows/**"
+      - "sonar-project.properties"
 
 jobs:
   build-scan-push:
