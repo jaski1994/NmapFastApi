@@ -6,3 +6,4 @@ python-nmap
 pytest
 httpx
 python-json-logger
+setuptools>=78.1.1
